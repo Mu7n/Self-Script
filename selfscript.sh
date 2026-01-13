@@ -89,7 +89,7 @@ echo -e "\e[32m开始申请SSL证书。\e[0m"
 
 openssl dhparam -out /etc/nginx/dhparam.pem 2048
 
-sudo certbot certonly --force-renewal --agree-tos -n -w /etc/nginx/Mu -m cert@$domain -d $domain
+sudo certbot certonly --webroot --force-renewal --agree-tos -n -w /etc/nginx/Mu -m cert@$domain -d $domain
 
 #覆盖conf
 sudo cat > /etc/nginx/nginx.conf << 'CONFIG'

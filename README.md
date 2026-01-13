@@ -2,8 +2,8 @@
 
 # 一键脚本
 ```bash
-bash -c (curl -L https://raw.githubusercontent.com/bulzmu/Self-Script/refs/heads/main/selfscript.sh)
+bash <(curl -L https://github.com/bulzmu/Self-Script/blob/main/selfscript.sh)
 ```
 ```bash
-bash -c (curl -L https://github.com/bulzmu/Self-Script/blob/main/selfscript.sh)
+bash <(curl -L https://raw.githubusercontent.com/bulzmu/Self-Script/refs/heads/main/selfscript.sh)
 ```

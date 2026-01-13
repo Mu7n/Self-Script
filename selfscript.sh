@@ -19,6 +19,8 @@
 #tar -xzvf /etc/nginx/Mu.tar.gz -C /etc/nginx
 #cat > file << EOF 覆盖&转义(文本中不需要转义的特殊符号前加\)
 #cat >> file << 'EOF' 追加&禁止转义(开头EOF加上''即可)
+set -e
+
 
 #安装
 echo -e "\e[32m开始安装nginx和certbot。\e[0m"
@@ -89,7 +91,7 @@ echo -e "\e[32m开始申请SSL证书。\e[0m"
 
 openssl dhparam -out /etc/nginx/dhparam.pem 2048
 
-sudo certbot certonly --webroot --force-renewal --agree-tos -n -w /etc/nginx/Mu -m cert@$domain -d $domain
+certbot certonly --webroot --force-renewal --agree-tos -n -w /etc/nginx/Mu -m cert@$domain -d $domain
 
 #覆盖conf
 sudo cat > /etc/nginx/nginx.conf << 'CONFIG'

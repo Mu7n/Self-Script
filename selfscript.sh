@@ -140,12 +140,6 @@ http {
     ssl_protocols  TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
 
-    # OCSP Stapling
-    ssl_stapling on;
-    ssl_stapling_verify on;
-    resolver 1.1.1.1 1.0.0.1 [2606:4700:4700::1111] [2606:4700:4700::1001] 8.8.8.8 8.8.4.4 [2001:4860:4860::8888] [2001:4860:4860::8844] 208.67.222.222 208.67.220.220 [2620:119:35::35] [2620:119:53::53] valid=60s;
-    resolver_timeout 2s;
-
     # Connection header for WebSocket reverse proxy
     map $http_upgrade $connection_upgrade {
         default upgrade;
@@ -191,7 +185,6 @@ server {
     # SSL
     ssl_certificate /etc/letsencrypt/live/$domain/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$domain/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/$domain/chain.pem;
 
     # security headers
     add_header X-XSS-Protection "1; mode=block" always;
@@ -221,7 +214,8 @@ server {
 #        proxy_set_header Host \$host;
 #        include proxy.conf;
 #    }
-    #wxapi
+
+    # wxapi
     location /wxapi {
         root   /etc/nginx/Mu;
         index  index.html index.htm;
@@ -288,7 +282,6 @@ server {
     # SSL
     ssl_certificate /etc/letsencrypt/live/$domain/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$domain/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/$domain/chain.pem;
 }
 
 # HTTP redirect
@@ -344,7 +337,6 @@ server {
     return 444;
     ssl_certificate /etc/letsencrypt/live/$domain/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$domain/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/$domain/chain.pem;
 }
 DEFAULT
 
@@ -359,11 +351,11 @@ echo -e "\e[35m已配置完成！\e[0m"
 #echo -e "\e[35mvim 按下i进入编辑模式 | 按下ecs退出编辑模式 | 输入:wq(!强制)保存并退出，输入:q!退出不保存\e[0m"
 #sudo vim /etc/ssh/sshd_config
 
-echo -e "\e[35mPort 22*** | PermitRootLogin yes | PubkeyAuthentication yes | PasswordAuthentication no\e[0m"
-
+#更改SSH端口
+echo -e "\e[35mPort ***** | PermitRootLogin yes | PubkeyAuthentication yes | PasswordAuthentication no\e[0m"
 read -r -p "请输入SSH端口：" sshport
 echo -e "SSH端口：\e[35m$sshport\e[0m"
-	
+#写入sshd
 cat >> /etc/ssh/sshd_config << SSHD
 Port $sshport
 PermitRootLogin yes
@@ -371,6 +363,5 @@ PubkeyAuthentication yes
 PasswordAuthentication no
 SSHD
 
-echo -e "\e[35m如果有问题则输入systemctl start ssh && systemctl enable ssh && systemctl restart sshd(.service)\e[0m"
-
+echo -e "\e[35m如有问题输入systemctl start ssh && systemctl enable ssh && systemctl restart sshd(.service)\e[0m"
 service sshd restart

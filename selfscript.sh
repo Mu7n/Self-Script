@@ -19,13 +19,13 @@
 #echo 'BASE64***' | base64 --decode | tee /etc/nginx/Mu.tar.gz > /dev/null （还不懂啥意思记录一下）
 #cat > file << EOF 覆盖&转义(文本中不需要转义的特殊符号前加\)
 #cat >> file << 'EOF' 追加&禁止转义(开头EOF加上''即可)
-set -e
 
+set -e
 
 #安装
 echo -e "\e[32m开始安装nginx和certbot。\e[0m"
 
-apt install nginx certbot -y
+apt-get install -y nginx certbot
 
 echo -e "\e[32m安装已完成，开始配置SSL证书。\e[0m"
 #邮箱
@@ -75,7 +75,7 @@ do
 done
 
 #创建ACME-challenge目录
-mkdir -p /etc/nginx/Mu && chown www-data /etc/nginx/Mu
+#mkdir -p /etc/nginx/Mu && chown www-data /etc/nginx/Mu
 
 #申请证书
 echo -e "\e[32m开始申请SSL证书。\e[0m"

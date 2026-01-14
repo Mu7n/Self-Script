@@ -89,6 +89,26 @@ tar -xzvf /etc/nginx/Mu.tar.gz -C /etc/nginx
 #申请证书
 echo -e "\e[32m开始申请SSL证书。\e[0m"
 
+cat > /etc/nginx/sites-available/default << WEBROOT
+server {
+    listen 80 reuseport;
+    listen [::]:80 reuseport;
+    listen 443 ssl http2 reuseport;
+    listen [::]:443 ssl http2 reuseport;
+    server_name $domain;
+    root /etc/nginx/Mu;
+
+    location / {
+        return 301 https://$domain\$request_uri;
+    }
+
+    # ACME-challenge
+    location ^~ /.well-known/acme-challenge/ {
+        root /etc/nginx/Mu;
+    }
+}
+WEBROOT
+
 openssl dhparam -out /etc/nginx/dhparam.pem 2048
 
 certbot certonly --webroot --force-renewal --agree-tos -n -w /etc/nginx/Mu -m cert@$domain -d $domain

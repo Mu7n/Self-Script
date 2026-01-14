@@ -8,15 +8,15 @@
 #chmod +x nginx.sh
 #赋予文件权限 -R=递归子文件
 #chmod -R 777 /etc/nginx/Mu
+#压缩 tar -zcvf 文件名.tar.gz 文件目录
+#tar -zcvf Mu.tar.gz /etc/nginx/Mu
+#解压到指定目录
+#tar -xzvf /etc/nginx/Mu.tar.gz -C /etc/nginx
 #base64编码
 #base64 -w 0 Mu.tar.gz > Mu.txt
 #base64解码
 #base64 -d /etc/nginx/Mu.txt > /etc/nginx/Mu.tar.gz
 #echo 'BASE64***' | base64 --decode | tee /etc/nginx/Mu.tar.gz > /dev/null （还不懂啥意思记录一下）
-#压缩 tar -zcvf 文件名.tar.gz 文件目录
-#tar -zcvf Mu.tar.gz /etc/nginx/Mu
-#解压到指定目录
-#tar -xzvf /etc/nginx/Mu.tar.gz -C /etc/nginx
 #cat > file << EOF 覆盖&转义(文本中不需要转义的特殊符号前加\)
 #cat >> file << 'EOF' 追加&禁止转义(开头EOF加上''即可)
 set -e
@@ -73,9 +73,6 @@ do
 		;;
 	esac
 done
-
-#创建html和ACME-challenge目录
-mkdir -p /etc/nginx/Mu && chown www-data /etc/nginx/Mu
 
 #cat > file << EOF 覆盖&转义(文本中不需要转义的特殊符号前加\)
 #cat >> file << 'EOF' 追加&禁止转义(开头EOF加上''即可)

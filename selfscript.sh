@@ -75,7 +75,7 @@ do
 done
 
 #创建ACME-challenge目录
-#mkdir -p /etc/nginx/Mu && chown www-data /etc/nginx/Mu
+mkdir -p /etc/nginx/Mu && chown www-data /etc/nginx/Mu
 
 #申请证书
 echo -e "\e[32m开始申请SSL证书。\e[0m"

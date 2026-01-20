@@ -94,7 +94,7 @@ tar -xzvf /etc/nginx/Mu.tar.gz -C /etc/nginx
 #覆盖nginx.conf
 cat > /etc/nginx/nginx.conf << 'CONFIG'
 #Mu
-user www-data;
+user nginx;
 pid /run/nginx.pid;
 worker_processes auto;
 worker_rlimit_nofile 65535;
@@ -117,6 +117,7 @@ http {
     types_hash_max_size 2048;
     types_hash_bucket_size 64;
     client_max_body_size 16M;
+	keepalive_timeout 65;
 
 	# DNS
 	resolver 1.1.1.1 1.0.0.1 [2606:4700:4700::1111] [2606:4700:4700::1001] 8.8.8.8 8.8.4.4 [2001:4860:4860::8888] [2001:4860:4860::8844] valid=60s;

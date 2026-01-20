@@ -153,28 +153,6 @@ http {
     limit_req_log_level warn;
     limit_req_zone $binary_remote_addr zone=login:10m rate=10r/m;
 
-    # Connection header for WebSocket reverse proxy
-    map $http_upgrade $connection_upgrade {
-        default upgrade;
-        "" close;
-    }
-
-    map $remote_addr $proxy_forwarded_elem {
-        # IPv4 addresses can be sent as-is
-        ~^[0-9.]+$ "for=$remote_addr";
-        # IPv6 addresses need to be bracketed and quoted
-        ~^[0-9A-Fa-f:.]+$ "for=\"[$remote_addr]\"";
-        # Unix domain socket names cannot be represented in RFC 7239 syntax
-        default "for=unknown";
-    }
-
-    map $http_forwarded $proxy_add_forwarded {
-        # If the incoming Forwarded header is syntactically valid, append to it
-        "~^(,[ \\t]*)*([!#$%&'*+.^_`|~0-9A-Za-z-]+=([!#$%&'*+.^_`|~0-9A-Za-z-]+|\"([\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|\\\\[\\t \\x21-\\x7E\\x80-\\xFF])*\"))?(;([!#$%&'*+.^_`|~0-9A-Za-z-]+=([!#$%&'*+.^_`|~0-9A-Za-z-]+|\"([\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|\\\\[\\t \\x21-\\x7E\\x80-\\xFF])*\"))?)*([ \\t]*,([ \\t]*([!#$%&'*+.^_`|~0-9A-Za-z-]+=([!#$%&'*+.^_`|~0-9A-Za-z-]+|\"([\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|\\\\[\\t \\x21-\\x7E\\x80-\\xFF])*\"))?(;([!#$%&'*+.^_`|~0-9A-Za-z-]+=([!#$%&'*+.^_`|~0-9A-Za-z-]+|\"([\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|\\\\[\\t \\x21-\\x7E\\x80-\\xFF])*\"))?)*)?)*$" "$http_forwarded, $proxy_forwarded_elem";
-        # Otherwise, replace it
-        default "$proxy_forwarded_elem";
-    }
-
     # Load configs
     include /etc/nginx/conf.d/*.conf;
     include /etc/nginx/sites-enabled/*;
@@ -261,24 +239,21 @@ FLO
 cat > /etc/nginx/proxy.conf << 'PROXY'
 proxy_http_version 1.1;
 proxy_cache_bypass $http_upgrade;
-
-# Proxy SSL
 proxy_ssl_server_name on;
-
-# Proxy headers
 proxy_set_header Upgrade $http_upgrade;
-proxy_set_header Connection $connection_upgrade;
-proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header Connection "upgrade";
 proxy_set_header Forwarded $proxy_add_forwarded;
+proxy_set_header X-Real-IP $remote_addr;
 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 proxy_set_header X-Forwarded-Proto $scheme;
 proxy_set_header X-Forwarded-Host $host;
 proxy_set_header X-Forwarded-Port $server_port;
-
-# Proxy timeouts
 proxy_connect_timeout 60s;
 proxy_send_timeout 60s;
 proxy_read_timeout 60s;
+proxy_buffer_size 128k;
+proxy_buffers 4 256k;
+proxy_busy_buffers_size 256k;
 PROXY
 
 #覆盖default
@@ -286,8 +261,8 @@ cat > /etc/nginx/sites-available/default << DEFAULT
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    listen 443 ssl default_server;
-    listen [::]:443 ssl default_server;
+    listen 443 ssl;
+    listen [::]:443 ssl;
     server_name _;
     return 444;
     ssl_certificate /etc/letsencrypt/live/$domain/fullchain.pem;

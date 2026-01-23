@@ -279,40 +279,40 @@ FRPPATH="/opt/frps"
 FRPFILE="https://github.com/fatedier/frp/releases/download"
 FRPAPI="https://api.github.com/repos/fatedier/frp/releases/latest"
 
-# 获取最新版本
+# 下载frp
 VER=$(curl -s $FRPAPI | grep '"tag_name":' | cut -d '"' -f 4 | cut -c 2-)
 if [[ ! -z $VER ]]; then
     FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
     FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
-else
-    echo -e "\e[31m获取版本失败！\e[0m"
-	read -r -p "请手动查询输入：" VER
-	FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
-	FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
-	echo -e "下载链接：\e[35m$FRPURL\e[0m"
-fi
-
-# 下载frp
-if [ -s $FRPPATH ]; then
-    rm -fr ${FRPTAR} frp_${VER}_linux_${ARCH}
-    echo -e "\e[32m开始下载$FRPTAR。\e[0m"
+	echo -e "\e[32m开始下载$FRPTAR。\e[0m"
     curl -L $FRPURL -o $FRPTAR 2>&1
 else
-    mkdir -p $FRPPATH
-    echo -e "\e[32m开始下载$FRPTAR。\e[0m"
+    echo -e "\e[31m获取版本失败！\e[0m"
+	read -r -p "请手动输入：" VER
+	FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
+	FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
+	echo -e "\e[32m开始下载$FRPTAR。\e[0m"
     curl -L $FRPURL -o $FRPTAR 2>&1
 fi
 
 # 解压frp
-if [ ! -s $FRPTAR ]; then
-    echo -e "\e[31m没有找到文件！\e[0m"
-    read -r -p "请手动查询输入：" FRPURL
-	curl -L $FRPURL -o $FRPTAR 2>&1
+if [ -s $FRPTAR ]; then
+    echo -e "\e[32m开始提取$FRPTAR。\e[0m"
+	mkdir -p $FRPPATH
+    tar xzvf $FRPTAR
+    mv -f frp_${VER}_linux_${ARCH}/frps ${FRPPATH}
+    rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH}
+    
 else
-    echo -e "\e[32m正在提取$FRPTAR。\e[0m"
-    tar xzf $FRPTAR
-    mv frp_${VER}_linux_${ARCH}/frps $FRPPATH
-    rm -fr $FRPTAR frp_${VER}_linux_${ARCH}
+    echo -e "\e[31m没有找到文件！\e[0m"
+    read -r -p "请手动输入：" FRPURL
+	echo -e "\e[32m开始下载$FRPTAR。\e[0m"
+	curl -L $FRPURL -o $FRPTAR 2>&1
+	echo -e "\e[32m开始提取$FRPTAR。\e[0m"
+	mkdir -p $FRPPATH
+    tar xzvf $FRPTAR
+    mv -f frp_${VER}_linux_${ARCH}/frps ${FRPPATH}
+    rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH}
 fi
 
 # 填写用户名密码
@@ -352,7 +352,7 @@ do
 done
 
 # 配置 frps.toml
-cat > /opt/fprs/frps.toml << EOF
+cat > $FRPPATH/frps.toml << TOML
 bindAddr = "0.0.0.0"
 bindPort = 7000
 quicBindPort = 7000
@@ -387,10 +387,10 @@ allowPorts = [
 maxPortsPerClient = 0
 udpPacketSize = 1500
 natholeAnalysisDataReserveHours = 168
-EOF
+TOML
 
 # 配置 frps.service
-cat >/lib/systemd/system/frps.service << EOF
+cat >/lib/systemd/system/frps.service << FRPS
 [Unit]
 Description=Frp Server Service
 After=network.target syslog.target
@@ -404,7 +404,7 @@ ExecStart=$FRPPATH -c ${FRPPATH}/frps.toml
 
 [Install]
 WantedBy=multi-user.target
-EOF
+FRPS
 
 chown root:root -R $FRPPATH && chmod 755 $FRPPATH
 

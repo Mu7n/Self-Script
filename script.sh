@@ -3,7 +3,8 @@
 #用到哪，学到哪。
 
 #bash <(curl -sSL https://get.docker.com)；安装docker
-#systemctl start sshd = service sshd start
+#systemctl start sshd = service sshd start；系统服务
+#ps -ef | grep 进程名 | grep -v grep | awk '{print $2}' | xargs kill -9；查找并关闭进程
 #chmod +x script.sh；赋予执行权限
 #chmod -R 755 /opt/frps && chown root:root -R /opt/frps；赋予文件权限 -R递归修改目录
 #tar -zcvf Mu.tar.gz /etc/nginx/Mu；压缩指定目录 tar -zcvf 文件名.tar.gz /文件目录
@@ -22,9 +23,9 @@
 # ！逻辑中的非、不是；
 #if ! 命令; then echo "命令错误"; exit 1; fi；错误退出
 #if [ -s 文件]；如果文件存在或size大于0)
-#if [ ! -s 文件]；如果文件不存在或size不大于等于0
-#if [ -z $string]；如果变量为0或空)
-#if [ ! -z $string]；如果变量不为0或非空
+#if [ ! -s 文件]；如果文件不存在或size等于0
+#if [ -z $string]；如果变量等于0或空)
+#if [ ! -z $string]；如果变量大于0或非空
 #/dev/null黑洞，用于丢弃任何写入它的数据；
 #命令 > /dev/null 2>&1；将正确信息和错误信息重定向/dev/null不显示到屏幕上；
 #命令 2>&1 > /dev/null；将错误信息显示到屏幕；正确信息输出/dev/null不显示到屏幕上；
@@ -60,27 +61,13 @@ do
 	read -r -p "请确认域名[Yes/No]：" input
 	case $input in
 	    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
-		    break
+		break
 		;;
-	    [nN][oO]|[nN]) echo -e "\e[35m请重新输入。\e[0m"
+		[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m"
+		    read -r -p "请输入域名：" domain
+			echo -e "域名：\e[35m$domain\e[0m"
 		;;
-	    *) echo -e "\e[31m错误，请重新输入！\e[0m"
-		    while :
-			do
-		        echo -e "域名：\e[35m$domain\e[0m"
-				read -r -p "请确认域名[Yes/No]：" input
-			    case $input in
-	                [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
-		                break
-		            ;;
-	                [nN][oO]|[nN]) echo -e "\e[35m请重新输入。\e[0m"
-					    read -r -p "请输入域名: " domain
-		            ;;
-	                *) echo -e "\e[31m错误，请重新输入！\e[0m"
-		            ;;
-	            esac
-			done
-			break
+		*) echo -e "\e[31m错误，请重新输入！\e[0m"
 		;;
 	esac
 done
@@ -173,21 +160,6 @@ http {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
     add_header Content-Security-Policy "default-src 'self' http: https: ws: wss: data: blob: 'unsafe-inline'; frame-ancestors 'self';";
 
-    # Proxy headers
-    proxy_http_version 1.1;
-    proxy_ssl_server_name on;
-    proxy_cache_bypass $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Forwarded-Port $server_port;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_connect_timeout 60s;
-    proxy_send_timeout 60s;
-    proxy_read_timeout 60s;
-
     # Load configs
     include /etc/nginx/conf.d/*.conf;
     include /etc/nginx/sites-enabled/*;
@@ -218,6 +190,21 @@ server {
     location /lk {
         proxy_pass http://127.0.0.1:16601;
         proxy_set_header Host \$host;
+		
+		# Proxy headers
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 
     # Favicon.ico
@@ -273,13 +260,14 @@ DEFAULT
 # 创建软连接
 #sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# 测试并重载
-echo -e "\e[35mNginx已配置完成！\e[0m"
+# 重载
+echo -e "\e[35mNginx配置完成！\e[0m"
 sudo nginx -t && sudo nginx -s reload
 
 # frp
-while ! test -z "$(ps -A | grep -w frps)"; do
-    FRPSPID=$(ps -A | grep -w frps | awk 'NR==1 {print $1}')
+#echo "ps -ef | grep 进程名 | grep -v grep | awk '{print $2}' | xargs kill -9"
+while ! test -z "$(ps -ef | grep frps)"; do
+    FRPSPID=$(ps -ef | grep frps | grep -v grep | awk '{print $2}')
     kill -9 $FRPSPID
 done
 
@@ -292,74 +280,60 @@ VER=$(curl -s $FRPAPI | grep '"tag_name":' | cut -d '"' -f 4 | cut -c 2-)
 if [[ ! -z $VER ]]; then
     FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
     FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
-	echo -e "\e[32m开始下载$FRPTAR。\e[0m"
+    echo -e "\e[32m开始下载$FRPTAR\e[0m"
     curl -L $FRPURL -o $FRPTAR 2>&1
 else
     echo -e "\e[31m获取版本失败！\e[0m"
-	read -r -p "请手动输入：" VER
-	FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
-	FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
-	echo -e "\e[32m开始下载$FRPTAR。\e[0m"
+    read -r -p "请手动输入：" VER
+    FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
+    FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
+    echo -e "\e[32m开始下载$FRPTAR\e[0m"
     curl -L $FRPURL -o $FRPTAR 2>&1
 fi
 
-# 解压frp
+# 解压
 if [ -s $FRPTAR ]; then
-    echo -e "\e[32m开始提取$FRPTAR。\e[0m"
-	mkdir -p $FRPPATH
+    echo -e "\e[32m开始提取$FRPTAR\e[0m"
+    mkdir -p $FRPPATH
     tar xzvf $FRPTAR
     mv -f frp_${VER}_linux_${ARCH}/frps ${FRPPATH}
-    rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH}
-    
+    rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH} 
 else
     echo -e "\e[31m没有找到文件！\e[0m"
     read -r -p "请输入链接：" FRPURL
-	echo -e "\e[32m开始下载$FRPTAR。\e[0m"
-	curl -L $FRPURL -o $FRPTAR 2>&1
-	echo -e "\e[32m开始提取$FRPTAR。\e[0m"
-	mkdir -p $FRPPATH
+    echo -e "\e[32m开始下载$FRPTAR\e[0m"
+    curl -L $FRPURL -o $FRPTAR 2>&1
+    echo -e "\e[32m开始提取$FRPTAR\e[0m"
+    mkdir -p $FRPPATH
     tar xzvf $FRPTAR
     mv -f frp_${VER}_linux_${ARCH}/frps ${FRPPATH}
     rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH}
 fi
 
-# 填写用户名密码
+# 令牌
 while :
 do
-    read -r -p "请输入USER：" USER
+    read -r -p "请输入USERNAME：" USERNAME
     read -r -p "请输入PASSWORD：" PASSWORD
-    TOKEN="${USER}${PASSWORD}"
-	echo -e "TOKEN：\e[35m$TOKEN\e[0m"
-	read -r -p "请确认令牌[Yes/No]：" input
-	case $input in
+    TOKEN="${USERNAME}${PASSWORD}"
+    echo -e "TOKEN：\e[35m$TOKEN\e[0m"
+    read -r -p "请确认令牌[Yes/No]：" input
+    case $input in
 	    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
 		    break
 		;;
-	    [nN][oO]|[nN]) echo -e "\e[35m请重新输入。\e[0m"
+		[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m"
+		    read -r -p "请输入USERNAME：" USERNAME
+			read -r -p "请输入PASSWORD：" PASSWORD
+			TOKEN="${USERNAME}${PASSWORD}"
+			echo -e "TOKEN：\e[35m$TOKEN\e[0m"
 		;;
-	    *) echo -e "\e[31m错误，请重新输入！\e[0m"
-		    while :
-			do
-		        echo -e "TOKEN：\e[35m$TOKEN\e[0m"
-				read -r -p "请确认令牌[Yes/No]：" input
-			    case $input in
-	                [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
-		                break
-		            ;;
-	                [nN][oO]|[nN]) echo -e "\e[35m请重新输入。\e[0m"
-					    read -r -p "请输入USER：" USER
-                        read -r -p "请输入PASSWORD：" PASSWORD
-		            ;;
-	                *) echo -e "\e[31m错误，请重新输入！\e[0m"
-		            ;;
-	            esac
-			done
-			break
+		*) echo -e "\e[31m错误，请重新输入！\e[0m"
 		;;
 	esac
 done
 
-# 配置 frps.toml
+# 配置frps.toml
 cat > $FRPPATH/frps.toml << TOML
 bindAddr = "0.0.0.0"
 bindPort = 7000
@@ -376,7 +350,7 @@ transport.tls.force = false
 
 webServer.addr = "0.0.0.0"
 webServer.port = 7500
-webServer.user = "$USER"
+webServer.user = "$USERNAME"
 webServer.password = "$PASSWORD"
 webServer.pprofEnable = false
 
@@ -397,7 +371,7 @@ udpPacketSize = 1500
 natholeAnalysisDataReserveHours = 168
 TOML
 
-# 配置 frps.service
+# 配置frps.service
 cat >/lib/systemd/system/frps.service << FRPS
 [Unit]
 Description=Frp Server Service
@@ -414,11 +388,11 @@ ExecStart=$FRPPATH -c ${FRPPATH}/frps.toml
 WantedBy=multi-user.target
 FRPS
 
+# 启动
 chown root:root -R $FRPPATH && chmod 755 $FRPPATH
-#sudo systemctl daemon-reload
+sudo systemctl daemon-reload
 sudo systemctl start frps
 sudo systemctl enable frps
-
 
 #echo -e "\e[32mvim 按下i进入编辑模式 | 按下ecs退出编辑模式 | 输入:wq(!强制)保存并退出，输入:q!退出不保存\e[0m"
 #sudo vim /etc/ssh/sshd_config

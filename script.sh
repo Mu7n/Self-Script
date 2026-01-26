@@ -3,6 +3,7 @@
 #用到哪，学到哪。
 
 #bash <(curl -sSL https://get.docker.com)；安装docker
+#systemctl start sshd = service sshd start
 #chmod +x script.sh；赋予执行权限
 #chmod -R 755 /opt/frps && chown root:root -R /opt/frps；赋予文件权限 -R递归修改目录
 #tar -zcvf Mu.tar.gz /etc/nginx/Mu；压缩指定目录 tar -zcvf 文件名.tar.gz /文件目录
@@ -56,23 +57,23 @@ while :
 do
     read -r -p "请输入域名：" domain
 	echo -e "域名：\e[35m$domain\e[0m"
-	read -r -p "[Yes/No]：" input
+	read -r -p "请确认域名[Yes/No]：" input
 	case $input in
 	    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
 		    break
 		;;
-	    [nN][oO]|[nN]) echo -e "\e[35m重新输入。\e[0m"
+	    [nN][oO]|[nN]) echo -e "\e[35m请重新输入。\e[0m"
 		;;
 	    *) echo -e "\e[31m错误，请重新输入！\e[0m"
 		    while :
 			do
 		        echo -e "域名：\e[35m$domain\e[0m"
-				read -r -p "[Yes/No]：" input
+				read -r -p "请确认域名[Yes/No]：" input
 			    case $input in
 	                [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
 		                break
 		            ;;
-	                [nN][oO]|[nN]) echo -e "\e[35m重新输入。\e[0m"
+	                [nN][oO]|[nN]) echo -e "\e[35m请重新输入。\e[0m"
 					    read -r -p "请输入域名: " domain
 		            ;;
 	                *) echo -e "\e[31m错误，请重新输入！\e[0m"
@@ -84,7 +85,7 @@ do
 	esac
 done
 
-# 申请证书
+# 证书
 echo -e "\e[32m开始申请SSL证书。\e[0m"
 openssl dhparam -out /etc/nginx/dhparam.pem 2048
 certbot certonly --webroot --force-renewal --agree-tos -n -w /var/www/html -m ssl@cert.bot -d $domain
@@ -279,7 +280,7 @@ FRPPATH="/opt/frps"
 FRPFILE="https://github.com/fatedier/frp/releases/download"
 FRPAPI="https://api.github.com/repos/fatedier/frp/releases/latest"
 
-# 下载frp
+# 下载
 VER=$(curl -s $FRPAPI | grep '"tag_name":' | cut -d '"' -f 4 | cut -c 2-)
 if [[ ! -z $VER ]]; then
     FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
@@ -305,7 +306,7 @@ if [ -s $FRPTAR ]; then
     
 else
     echo -e "\e[31m没有找到文件！\e[0m"
-    read -r -p "请手动输入：" FRPURL
+    read -r -p "请输入链接：" FRPURL
 	echo -e "\e[32m开始下载$FRPTAR。\e[0m"
 	curl -L $FRPURL -o $FRPTAR 2>&1
 	echo -e "\e[32m开始提取$FRPTAR。\e[0m"
@@ -322,23 +323,23 @@ do
     read -r -p "请输入PASSWORD：" PASSWORD
     TOKEN="${USER}${PASSWORD}"
 	echo -e "TOKEN：\e[35m$TOKEN\e[0m"
-	read -r -p "[Yes/No]：" input
+	read -r -p "请确认令牌[Yes/No]：" input
 	case $input in
 	    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
 		    break
 		;;
-	    [nN][oO]|[nN]) echo -e "\e[35m重新输入。\e[0m"
+	    [nN][oO]|[nN]) echo -e "\e[35m请重新输入。\e[0m"
 		;;
 	    *) echo -e "\e[31m错误，请重新输入！\e[0m"
 		    while :
 			do
 		        echo -e "TOKEN：\e[35m$TOKEN\e[0m"
-				read -r -p "[Yes/No]：" input
+				read -r -p "请确认令牌[Yes/No]：" input
 			    case $input in
 	                [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
 		                break
 		            ;;
-	                [nN][oO]|[nN]) echo -e "\e[35m重新输入。\e[0m"
+	                [nN][oO]|[nN]) echo -e "\e[35m请重新输入。\e[0m"
 					    read -r -p "请输入USER：" USER
                         read -r -p "请输入PASSWORD：" PASSWORD
 		            ;;
@@ -407,10 +408,10 @@ WantedBy=multi-user.target
 FRPS
 
 chown root:root -R $FRPPATH && chmod 755 $FRPPATH
-
+#sudo systemctl daemon-reload
 sudo systemctl start frps
 sudo systemctl enable frps
-#sudo systemctl daemon-reload
+
 
 #echo -e "\e[32mvim 按下i进入编辑模式 | 按下ecs退出编辑模式 | 输入:wq(!强制)保存并退出，输入:q!退出不保存\e[0m"
 #sudo vim /etc/ssh/sshd_config
@@ -437,6 +438,6 @@ sudo ufw allow 7500
 sudo ufw enable | echo "y"
 
 echo -e "\e[31m如有问题输入systemctl start ssh && systemctl enable ssh && systemctl restart sshd(.service)\e[0m"
-service sshd restart
+sudo systemctl restart sshd
 
 echo -e "\e[35mEND！\e[0m"

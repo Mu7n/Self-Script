@@ -61,7 +61,7 @@ do
 	read -r -p "请确认域名[Yes/No]：" input
 	case $input in
 	    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
-		break
+		    break
 		;;
 		[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m"
 		    read -r -p "请输入域名：" domain

@@ -196,7 +196,6 @@ else
 				;;
 			3)
 			    echo -e "\e[32m跳过申请SSL证书。\e[0m"
-				exit 0
 				;;
 			*)
 			    echo -e "\e[31m错误，请重新输入！\e[0m"
@@ -363,7 +362,7 @@ if [ -s /lib/systemd/system/frps.service ]; then
 				;;
 			2)
 			    echo -e "\e[32m退出。\e[0m"
-				exit 0
+				break
 				;;
 	done
 else

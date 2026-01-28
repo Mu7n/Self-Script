@@ -25,7 +25,6 @@
 #if [ ! -s 文件]；如果文件不存在或size等于0
 #if [ -z $string]；如果变量等于0或空)
 #if [ ! -z $string]；如果变量大于0或非空
-#/dev/null黑洞，用于丢弃任何写入它的数据；
 #命令 > /dev/null 2>&1；将正确信息和错误信息重定向/dev/null不显示到屏幕上；
 #命令 2>&1 > /dev/null；将错误信息显示到屏幕；正确信息输出/dev/null不显示到屏幕上；
 #find / *.txt 2>/dev/null；根目录中没有权限，错误信息太多，显示正确信息；
@@ -144,15 +143,18 @@ if [ ! -s /etc/letsencrypt/live ]; then
 	while true; do
 	    read -r -p "请确认域名[Yes/No]：" input
 		case $input in
-		    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m"
-			    break
+		    [yY][eE][sS]|[yY])
+			    echo -e "\e[35m已确认。\e[0m"
+				break
 				;;
-			[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m"
-			    read -r -p "请输入域名：" domain
+			[nN][oO]|[nN])
+			    echo -e "\e[32m请重新输入。\e[0m"
+				read -r -p "请输入域名：" domain
 				echo -e "域名：\e[35m$domain\e[0m"
 				;;
-			*) echo -e "\e[31m错误，请重新输入！\e[0m"
-			    sleep 1
+			*)
+			    echo -e "\e[31m错误，请重新输入！\e[0m"
+				sleep 1
 				continue
 				;;
 		esac
@@ -303,7 +305,7 @@ echo -e "\e[35mNginx配置完成！\e[0m"
 sudo nginx -t && sudo nginx -s reload
 fi
 
-# frp
+# frps
 FRPPATH="/opt/Mu/frps"
 FRPFILE="https://github.com/fatedier/frp/releases/download"
 FRPAPI="https://api.github.com/repos/fatedier/frp/releases/latest"
@@ -314,6 +316,7 @@ while ! test -z $(ps -ef | grep frps | grep -v grep); do
     pkill -9 frps
 done
 
+# TOKEN
 if [ -s /lib/systemd/system/frps.service ]; then
     while true; do
 	    echo -e "\e[32m检测到已安装frps。\e[0m"
@@ -400,8 +403,8 @@ else
 	done
 fi
 
+# 配置frps.service
 if [ $TOML = TOML ]; then
-# 配置frps.toml
 cat > ${FRPPATH}/frps.toml << TOML
 bindAddr = "0.0.0.0"
 bindPort = 7000
@@ -439,7 +442,6 @@ udpPacketSize = 1500
 natholeAnalysisDataReserveHours = 168
 TOML
 
-# 配置frps.service
 cat > /lib/systemd/system/frps.service << FRPS
 [Unit]
 Description=Frp Server Service
@@ -463,10 +465,9 @@ sudo systemctl start frps
 sudo systemctl enable frps
 fi
 
+# SSH
 #echo -e "\e[32mvim 按下i进入编辑模式 | 按下ecs退出编辑模式 | 输入:wq(!强制)保存并退出，输入:q!退出不保存\e[0m"
 #sudo vim /etc/ssh/sshd_config
-
-# 更改SSH端口
 echo -e "\e[32mPort ***** | PermitRootLogin yes | PubkeyAuthentication yes | PasswordAuthentication no\e[0m"
 read -r -p "请输入SSH端口：" sshport
 echo -e "SSH端口：\e[35m$sshport\e[0m"
@@ -479,7 +480,7 @@ PubkeyAuthentication yes
 PasswordAuthentication no
 SSHD
 
-# 开启防火墙
+# 防火墙
 #iptables -A INPUT -p tcp --dport $sshport -j ACCEPT
 sudo ufw allow $sshport
 sudo ufw allow 443

@@ -3,7 +3,7 @@
 #用到哪，学到哪。
 #bash <(curl -sSL https://get.docker.com)；安装docker
 #systemctl start sshd = service sshd start；系统服务
-#ps -ef | grep 进程名 | grep -v grep | awk '{print $2}' | xargs kill -9；查找并关闭进程
+#ps -ef | grep 进程名 | grep -v grep | awk '{print $2}'；查找进程
 #chmod +x script.sh；赋予执行权限
 #chmod -R 755 /opt/frps && chown root:root -R /opt/frps；赋予文件权限 -R递归修改目录
 #tar -zcvf Mu.tar.gz /etc/nginx/Mu；压缩指定目录 tar -zcvf 文件名.tar.gz /文件目录
@@ -20,16 +20,14 @@
 #./test.sh > stout.txt；同下
 #./test.sh 1> stout.txt；同上
 # ！逻辑中的非、不是；
-#if ! 命令; then echo "命令错误"; exit 1; fi；错误退出
 #if [ -s 文件]；如果文件存在或size大于0)
 #if [ ! -s 文件]；如果文件不存在或size等于0
 #if [ -z $string]；如果变量等于0或空)
 #if [ ! -z $string]；如果变量大于0或非空
-#命令 > /dev/null 2>&1；将正确信息和错误信息重定向/dev/null不显示到屏幕上；
-#命令 2>&1 > /dev/null；将错误信息显示到屏幕；正确信息输出/dev/null不显示到屏幕上；
-#find / *.txt 2>/dev/null；根目录中没有权限，错误信息太多，显示正确信息；
+#命令 > /dev/null 2>&1；正确信息和错误信息输出到/dev/null；不显示到屏幕
+#命令 2> /dev/null；错误信息输出到/dev/null；正确信息显示到屏幕
 
-echo -e "\e[35m\n#Mu\e[0m"
+echo -e "\e[35m\nMu\e[0m"
 set -u
 
 # 关闭SELINUX
@@ -154,7 +152,6 @@ if [ ! -s /etc/letsencrypt/live ]; then
 				;;
 			*)
 			    echo -e "\e[31m错误，请重新输入！\e[0m"
-				sleep 1
 				continue
 				;;
 		esac
@@ -165,9 +162,9 @@ if [ ! -s /etc/letsencrypt/live ]; then
 else
     while true; do
 	    echo -e "\e[32m检测到已有SSL证书。\e[0m"
-		echo -e "\e[32m1）强制申请\e[0m"
-		echo -e "\e[32m2）重新申请\e[0m"
-		echo -e "\e[32m3）跳过申请\e[0m"
+		echo -e "\e[32m1、强制申请\e[0m"
+		echo -e "\e[32m2、更改域名\e[0m"
+		echo -e "\e[32m3、跳过申请\e[0m"
 		read -p "请输入选项：" OPTION
 		case $OPTION in
 		    1)
@@ -185,7 +182,7 @@ else
 					case $input in
 					    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m" ; break ;;
 						[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m" ; read -r -p "请输入域名：" domain ; echo -e "域名：\e[35m$domain\e[0m" ;;
-						*) echo -e "\e[31m错误，请重新输入！\e[0m" ; sleep 1 ; continue ;;
+						*) echo -e "\e[31m错误，请重新输入！\e[0m" ; continue ;;
 					esac
 				done
 				rm -rf /etc/letsencrypt/live
@@ -196,10 +193,10 @@ else
 				;;
 			3)
 			    echo -e "\e[32m跳过申请SSL证书。\e[0m"
+				break
 				;;
 			*)
 			    echo -e "\e[31m错误，请重新输入！\e[0m"
-				sleep 1
 				continue
 				;;
 		esac
@@ -316,11 +313,11 @@ while ! test -z $(ps -ef | grep frps | grep -v grep); do
 done
 
 # TOKEN
-if [ -s /lib/systemd/system/frps.service ]; then
+if [ -s ${FRPPATH}/frps ]; then
     while true; do
 	    echo -e "\e[32m检测到已安装frps。\e[0m"
-		echo -e "\e[32m1）升级\e[0m"
-		echo -e "\e[32m2）退出\e[0m"
+		echo -e "\e[32m1、升级\e[0m"
+		echo -e "\e[32m2、退出\e[0m"
 		read -p "请输入选项：" OPTION
 		case $OPTION in
 		    1)
@@ -363,6 +360,10 @@ if [ -s /lib/systemd/system/frps.service ]; then
 			2)
 			    echo -e "\e[32m退出。\e[0m"
 				break
+				;;
+			*)
+			    echo -e "\e[31m错误，请重新输入！\e[0m"
+				continue
 				;;
 	done
 else

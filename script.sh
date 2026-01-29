@@ -213,6 +213,7 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
     server_name $domain;
+    root /etc/nginx/Mu;
     return 301 https://$domain\$request_uri;
 
     # SSL
@@ -225,8 +226,8 @@ server {
     }
 
     # Reverse proxy
-    location /lk {
-        proxy_pass http://127.0.0.1:16601;
+    location /frp {
+        proxy_pass http://127.0.0.1:7500;
         proxy_set_header Host \$host;
 		
 		# Proxy headers
@@ -295,10 +296,10 @@ server {
 DEFAULT
 
 # 创建软连接
-#sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+#ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 echo -e "\e[35mNginx配置完成！\e[0m"
-sudo nginx -t && sudo nginx -s reload
+nginx -t && nginx -s reload
 fi
 
 # frps
@@ -313,60 +314,7 @@ while ! test -z $(ps -ef | grep frps | grep -v grep); do
 done
 
 # TOKEN
-if [ -s ${FRPPATH}/frps ]; then
-    while true; do
-	    echo -e "\e[32m检测到已安装frps。\e[0m"
-		echo -e "\e[32m1、升级\e[0m"
-		echo -e "\e[32m2、退出\e[0m"
-		read -p "请输入选项：" OPTION
-		case $OPTION in
-		    1)
-			    if [ ! -z $VER ]; then
-				    FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
-					FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
-					echo -e "\e[32m下载$FRPTAR\e[0m"
-					curl -L $FRPURL -o $FRPTAR
-					echo -e "\e[32m提取$FRPTAR\e[0m"
-					mkdir -p $FRPPATH
-					tar xzvf $FRPTAR
-					mv -f frp_${VER}_linux_${ARCH}/frps ${FRPPATH}
-					rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH}
-				else
-				    echo -e "\e[31m未找到文件！\e[0m"
-					read -r -p "请输入链接：" FRPURL
-					echo -e "\e[32m下载$FRPTAR\e[0m"
-					curl -L $FRPURL -o $FRPTAR
-					echo -e "\e[32m提取$FRPTAR\e[0m"
-					mkdir -p $FRPPATH
-					tar xzvf $FRPTAR
-					mv -f frp_${VER}_linux_${ARCH}/frps ${FRPPATH}
-					rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH}
-				fi
-				read -r -p "请输入USERNAME：" USERNAME
-				read -r -p "请输入PASSWORD：" PASSWORD
-				TOKEN="${USERNAME}${PASSWORD}"
-				while true; do
-				    echo -e "TOKEN：\e[35m$TOKEN\e[0m"
-					read -r -p "请确认令牌[Yes/No]：" input
-					case $input in
-					    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m" ; TOML=TOML ; break ;;
-						[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m" ; read -r -p "请输入USERNAME：" USERNAME ; read -r -p "请输入PASSWORD：" PASSWORD ;;
-						*) echo -e "\e[31m错误，请重新输入！\e[0m" ; continue ;;
-					esac
-				done
-				break
-				;;
-			2)
-			    echo -e "\e[32m退出。\e[0m"
-				break
-				;;
-			*)
-			    echo -e "\e[31m错误，请重新输入！\e[0m"
-				continue
-				;;
-		esac
-	done
-else
+if [ ! -s ${FRPPATH}/frps ]; then
     if [ ! -z $VER ]; then
 	    FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
 		FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
@@ -391,19 +339,72 @@ else
 	read -r -p "请输入USERNAME：" USERNAME
 	read -r -p "请输入PASSWORD：" PASSWORD
 	TOKEN="${USERNAME}${PASSWORD}"
+	echo -e "TOKEN：\e[35m$TOKEN\e[0m"
 	while true; do
-	    echo -e "TOKEN：\e[35m$TOKEN\e[0m"
-		read -r -p "请确认令牌[Yes/No]：" input
+	    read -r -p "请确认令牌[Yes/No]：" input
 		case $input in
-		    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m" ; TOML=TOML ; break ;;
-			[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m" ; read -r -p "请输入USERNAME：" USERNAME ; read -r -p "请输入PASSWORD：" PASSWORD ;;
+		    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m" ; break ;;
+			[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m" ; read -r -p "请输入USERNAME：" USERNAME ; read -r -p "请输入PASSWORD：" PASSWORD ; TOKEN="${USERNAME}${PASSWORD}" ; echo -e "TOKEN：\e[35m$TOKEN\e[0m" ;;
 			*) echo -e "\e[31m错误，请重新输入！\e[0m" ; continue ;;
+		esac
+	done
+else
+    while true; do
+	    echo -e "\e[32m检测到已安装frps。\e[0m"
+		echo -e "\e[32m1、升级\e[0m"
+		echo -e "\e[32m2、退出\e[0m"
+		read -p "请输入选项：" OPTION
+		case $OPTION in
+		    1)
+			    if [ ! -z $VER ]; then
+				    FRPTAR="frp_${VER}_linux_${ARCH}.tar.gz"
+					FRPURL="${FRPFILE}/v${VER}/${FRPTAR}"
+					echo -e "\e[32m下载$FRPTAR\e[0m"
+					curl -L $FRPURL -o $FRPTAR
+					echo -e "\e[32m提取$FRPTAR\e[0m"
+					mkdir -p $FRPPATH
+					tar xzvf $FRPTAR
+					mv -f frp_${VER}_linux_${ARCH}/frps ${FRPPATH}
+					rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH}
+				else
+				    echo -e "\e[31m未获取！\e[0m"
+					read -r -p "请输入链接：" FRPURL
+					echo -e "\e[32m下载$FRPTAR\e[0m"
+					curl -L $FRPURL -o $FRPTAR
+					echo -e "\e[32m提取$FRPTAR\e[0m"
+					mkdir -p $FRPPATH
+					tar xzvf $FRPTAR
+					mv -f frp_${VER}_linux_${ARCH}/frps ${FRPPATH}
+					rm -rf ${FRPTAR} frp_${VER}_linux_${ARCH}
+				fi
+				read -r -p "请输入USERNAME：" USERNAME
+				read -r -p "请输入PASSWORD：" PASSWORD
+				TOKEN="${USERNAME}${PASSWORD}"
+				echo -e "TOKEN：\e[35m$TOKEN\e[0m"
+				while true; do
+				    read -r -p "请确认令牌[Yes/No]：" input
+					case $input in
+					    [yY][eE][sS]|[yY]) echo -e "\e[35m已确认。\e[0m" ; rm -rf ${FRPPATH}/frps.toml ; break ;;
+						[nN][oO]|[nN]) echo -e "\e[32m请重新输入。\e[0m" ; read -r -p "请输入USERNAME：" USERNAME ; read -r -p "请输入PASSWORD：" PASSWORD ; TOKEN="${USERNAME}${PASSWORD}" ; echo -e "TOKEN：\e[35m$TOKEN\e[0m" ;;
+						*) echo -e "\e[31m错误，请重新输入！\e[0m" ; continue ;;
+					esac
+				done
+				break
+				;;
+			2)
+			    echo -e "\e[32m退出。\e[0m"
+				break
+				;;
+			*)
+			    echo -e "\e[31m错误，请重新输入！\e[0m"
+				continue
+				;;
 		esac
 	done
 fi
 
 # 配置frps.service
-if [ $TOML = TOML ]; then
+if [ ! -s ${FRPPATH}/frps.toml ]; then
 cat > ${FRPPATH}/frps.toml << TOML
 bindAddr = "0.0.0.0"
 bindPort = 7000
@@ -493,5 +494,5 @@ systemctl restart sshd
 fi
 
 service frps status
-service sshd status
-echo -e "\e[35mEND！\e[0m"
+ufw status
+echo -e "\e[35m\nEND！\e[0m"

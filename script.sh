@@ -309,9 +309,7 @@ FRPAPI="https://api.github.com/repos/fatedier/frp/releases/latest"
 VER="$(curl -s $FRPAPI | grep '"tag_name":' | cut -d '"' -f 4 | cut -c 2-)"
 
 # 结束进程
-while ! test -z $(ps -ef | grep frps | grep -v grep); do
-    pkill -9 frps
-done
+if [ ! -z $(ps -ef | grep frps | grep -v grep) ]; then ; pkill -9 frps ; fi
 
 # TOKEN
 if [ ! -s ${FRPPATH}/frps ]; then

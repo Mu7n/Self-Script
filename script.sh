@@ -451,7 +451,7 @@ Wants=network.target
 Type=simple
 Restart=on-failure
 RestartSec=5s
-ExecStart=$FRPPATH -c ${FRPPATH}/frps.toml
+ExecStart=${FRPPATH}/frps -c ${FRPPATH}/frps.toml
 
 [Install]
 WantedBy=multi-user.target

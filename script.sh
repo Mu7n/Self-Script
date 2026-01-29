@@ -185,8 +185,10 @@ else
 						*) echo -e "\e[31m错误，请重新输入！\e[0m" ; continue ;;
 					esac
 				done
+				if [ $domain != $(ls -l /etc/letsencrypt/live |awk '/^d/ {print $NF}') ]; then
 				rm -rf /etc/letsencrypt/live
 				rm -rf /etc/nginx/conf.d/FLO.conf
+				fi
 				echo -e "\e[32m申请SSL证书。\e[0m"
 				certbot certonly --webroot --force-renewal --agree-tos -n -w /var/www/html -m ssl@cert.bot -d $domain
 				break
